@@ -31,7 +31,7 @@ const columnsRight = [
     },
     {
         title: 'ĐIỂM RÈN LUYỆN',
-        dataIndex: 'march',
+        dataIndex: 'plus',
     },
     {
         title: '',
@@ -118,6 +118,7 @@ const Manage = () => {
             let tmp = response.data;
             for ( let i = 0; i < tmp.length; i++) {
                 tmp[i].stt = i+1;
+                tmp[i].plus = '+' + tmp[i].plus;
                 tmp[i].action = <Image className='icon-edit' onClick={() => hanleOpenEdit(tmp[i])} src = 'image/edit.png' preview = {false} />
             }
             setDataRight(tmp);
