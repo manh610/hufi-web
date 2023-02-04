@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import 'antd/dist/antd.css';
 import { Image, Input, Button, Row, Col, Table, Modal  } from 'antd';
 // import Modal from '@mui/material/Modal';
@@ -8,9 +8,19 @@ import 'react-toastify/dist/ReactToastify.css';
 import axios from 'axios';
 import { userService } from '../../service/user';
 import { DatePicker, Space } from 'antd';
+import { CSVLink } from "react-csv";
+
 const { RangePicker } = DatePicker;
 
+
 const { confirm } = Modal;
+
+const headers = [
+    { label: "HỌ TÊN", key: "name" },
+    { label: "MSSV", key: "mssv" },
+    { label: "LỚP", key: "lop" },
+    { label: "ĐIỂM CỘNG RÈN LUYỆN", key: "plus" }
+];
 
 const columnsRight = [
     {
@@ -55,6 +65,15 @@ const columnsLeft = [
 ];
 
 
+const data = [
+    {
+        name: 'manh',
+        lop : '123',
+        mssv: '1',
+        plus: 1
+    }
+]
+
 const Manage = () => {
 
     const user = userService.get();
@@ -81,6 +100,12 @@ const Manage = () => {
             getDataEvent();
         }
     }
+
+    const csvReport = {
+        data: data,
+        headers: headers,
+        filename: 'data.csv'
+      };
 
     const handleEdit = (id) => {
         console.log('edit')
@@ -346,6 +371,12 @@ const Manage = () => {
         handleCloseEditStudent();
     }
 
+    const csvLinkEl = useRef();
+
+    const downloadReport = async () => {
+        csvLinkEl.current.link.click();
+      }
+
     return ( 
         <div className='manage'>
             <Row className='header-manage'>
@@ -440,7 +471,16 @@ const Manage = () => {
 
                         />
                         <Button className='btn-import'>Import file</Button>
-                        <Button className='btn-export'>Xuất file</Button>
+
+                        <Button className='btn-export' onClick={() => downloadReport()}>
+                            Xuất file
+                        </Button>
+                        <CSVLink
+                            headers={headers}
+                            filename="data.csv"
+                            data={dataRight}
+                            ref={csvLinkEl}
+                        />
                         <Button onClick={handleOpenStudent} className='btn-add-tbleft'>Thêm</Button>
                         <Button className='btn-delete'>Xóa</Button>
                     </div>
