@@ -60,7 +60,8 @@ const Login = () => {
     }
 
     const login = () => {
-        checkLogin()
+        // checkLogin()
+        navigate('/manage')
     }
 
     return ( 
