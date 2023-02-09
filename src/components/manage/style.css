@@ -6,6 +6,15 @@
     flex-direction: column;
 }
 
+.more {
+    width: 40px;
+}
+
+.more:hover {
+    cursor: pointer;
+}
+
+
 .header-manage {
     display: flex;
     height: 100px;
@@ -133,5 +142,40 @@
 }
 
 .icon-edit:hover {
+    cursor: pointer;
+}
+
+.icon-filter:hover {
+    cursor: pointer;
+}
+
+.icon-filter {
+    width: 20px;
+}
+
+.icon-view:hover {
+    cursor: pointer;
+}
+
+.icon-view {
+    width: 20px;
+}
+
+.event-filter {
+    margin-left: 40px;
+    margin-top: 10px;
+    font-weight: 600;
+    font-size: 17px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.icon-x {
+    width: 30px;
+    margin-left: 50px;
+}
+
+.icon-x:hover {
     cursor: pointer;
 }

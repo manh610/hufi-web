@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import 'antd/dist/antd.css';
-import { Image, Input, Button, Row, Col, Table, Modal  } from 'antd';
+import { Image, Input, Button, Row, Col, Table, Modal, Tooltip  } from 'antd';
 // import Modal from '@mui/material/Modal';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import './style.css'
@@ -9,6 +9,7 @@ import axios from 'axios';
 import { userService } from '../../service/user';
 import { DatePicker, Space } from 'antd';
 import { CSVLink } from "react-csv";
+import { useNavigate } from "react-router-dom";
 
 const { RangePicker } = DatePicker;
 
@@ -46,6 +47,10 @@ const columnsRight = [
     {
         title: '',
         dataIndex: 'action'
+    },
+    {
+        title: '',
+        dataIndex: 'view'
     }
 ];
 
@@ -59,9 +64,44 @@ const columnsLeft = [
         dataIndex: 'name',
     },
     {
+        title: 'Điểm cộng',
+        dataIndex: 'plus',
+    },
+    {
         title: '',
         dataIndex: 'action'
+    },
+    {
+        title: '',
+        dataIndex: 'filter'
     }
+];
+
+const columnsModal = [
+    {
+        title: '#',
+        dataIndex: 'stt'
+    },
+    {
+        title: 'Tên sự kiện',
+        dataIndex: 'name',
+    },
+    {
+        title: 'Điểm cộng',
+        dataIndex: 'plus',
+    },
+    {
+        title: 'Địa điểm',
+        dataIndex: 'address'
+    },
+    {
+        title: 'Thời gian bắt đầu',
+        dataIndex: 'timeStart'
+    },
+    {
+        title: 'Thời gian kết thúc',
+        dataIndex: 'timeEnd'
+    },
 ];
 
 
@@ -124,9 +164,40 @@ const Manage = () => {
             let tmp = response.data;
             for ( let i = 0; i < tmp.length; i++) {
                 tmp[i].stt = i+1;
-                tmp[i].action = <Image onClick={() => showDeleteConfirm(tmp[i].id)} className='icon-del' src = 'image/delete.png' preview = {false} />
+                tmp[i].plus = '+' + tmp[i].plus;
+                tmp[i].action =  <Tooltip title='Xóa'><Image onClick={() => showDeleteConfirm(tmp[i].id)} className='icon-del' src = 'image/delete.png' preview = {false} /></Tooltip>
+                tmp[i].filter = <Tooltip title='Lọc'><Image onClick={() => filterStudentByEvent(tmp[i])} className='icon-filter' src = 'image/filter.png' preview = {false} /></Tooltip>
             }
             setDataLeft(tmp);
+        }
+    }
+
+    const filterStudentByEvent = async (event) => {
+        setEventFilter(event.name);
+        let response;
+        let code = 222;
+        await axios.get(`http://localhost:2002/studentEvents/event/${event.id}`)
+            .then( res => {
+                response = res.data;
+                code = 200;
+            })
+            .catch(error => {console.log(error)});
+        if ( code === 200 ) {
+            let tmp = [];
+
+            for ( let i = 0; i < response.data.length; i++) {
+                tmp.push(response.data[i].student)
+            }
+            console.log(tmp);
+            if ( tmp.length > 0 ) {
+                for ( let i = 0; i < tmp.length; i++) {
+                    tmp[i].stt = i+1;
+                    tmp[i].plus = '+' + tmp[i].plus;
+                    tmp[i].action = <Tooltip title='Sửa'><Image className='icon-edit' onClick={() => hanleOpenEdit(tmp[i])} src = 'image/edit.png' preview = {false} /></Tooltip>
+                    tmp[i].view = <Tooltip title='Xem chi tiết'><Image className='icon-view' onClick={() => openView(tmp[i])} src = 'image/view.png' preview = {false} /></Tooltip>
+                }
+            }
+            setDataRight(tmp);
         }
     }
 
@@ -144,11 +215,48 @@ const Manage = () => {
             for ( let i = 0; i < tmp.length; i++) {
                 tmp[i].stt = i+1;
                 tmp[i].plus = '+' + tmp[i].plus;
-                tmp[i].action = <Image className='icon-edit' onClick={() => hanleOpenEdit(tmp[i])} src = 'image/edit.png' preview = {false} />
+                tmp[i].action = <Tooltip title='Sửa'><Image className='icon-edit' onClick={() => hanleOpenEdit(tmp[i])} src = 'image/edit.png' preview = {false} /></Tooltip>
+                tmp[i].view = <Tooltip title='Xem chi tiết'><Image className='icon-view' onClick={() => openView(tmp[i])} src = 'image/view.png' preview = {false} /></Tooltip>
             }
             setDataRight(tmp);
         }
     }
+
+    const [dataModal, setDataModal] = useState([]);
+
+    const openView = async (student) => {
+        setOpenModalView(true);
+        let response;
+        let code = 222;
+        await axios.get(`http://localhost:2002/studentEvents/student/${student.id}`)
+            .then( res => {
+                response = res.data;
+                code = 200;
+            })
+            .catch(error => {console.log(error)});
+        if ( code === 200 ) {
+            let tmp = [];
+
+            for ( let i = 0; i < response.data.length; i++) {
+                tmp.push(response.data[i].event)
+            }
+            console.log(tmp);
+            if ( tmp.length > 0 ) {
+                for ( let i = 0; i < tmp.length; i++) {
+                    tmp[i].stt = i+1;
+                    let startDate = new Date(tmp[i].timeStart);
+                    const tmpStart = startDate.getDate() + '-' + ( startDate.getMonth()+1) + '-' + startDate.getFullYear();
+                    tmp[i].timeStart = tmpStart;
+                    let endDate = new Date(tmp[i].timeEnd);
+                    const tmpEnd = endDate.getDate() + '-' + ( endDate.getMonth()+1) + '-' + endDate.getFullYear();
+                    tmp[i].timeEnd = tmpEnd;
+                    tmp[i].plus = '+' + tmp[i].plus;
+                }
+            }
+            setDataModal(tmp);
+        }
+    }
+
     const [selectedRowKeysLeft, setSelectedRowKeysLeft] = useState([]);
     const onSelectChangeLeft = (newSelectedRowKeys) => {
         console.log('selectedRowKeys changed: ', newSelectedRowKeys);
@@ -284,6 +392,7 @@ const Manage = () => {
 
     const [nameEvent, setNameEvent] = useState('');
     const [address, setAddress] = useState('')
+    const [plus, setPlus] = useState('');
     
     const handleAddEvent = async () => {
         let response;
@@ -293,6 +402,7 @@ const Manage = () => {
             address: address,
             timeStart: startDate,
             timeEnd: endDate,
+            plus: +plus,
             teacherId: user.id
         })
             .then( res => {
@@ -343,6 +453,10 @@ const Manage = () => {
         setOpenModalEditStudent(false);
     }
 
+    const handleCloseView = () => {
+        setOpenModalView(false);
+    }
+
     const hanleOpenEdit = (student) => {
         setNameEditStudent(student.name);
         setEditMSSV(student.mssv);
@@ -377,6 +491,22 @@ const Manage = () => {
         csvLinkEl.current.link.click();
       }
 
+    const [eventFilter, setEventFilter] = useState('Chưa chọn sự kiện')
+
+    const [openModalView, setOpenModalView] = useState(false);
+
+    const navigate = useNavigate();
+
+    const logout = () => {
+        userService.logout();
+        navigate('/')
+    }
+    
+    const delFilter = () => {
+        setEventFilter('Chưa chọn sự kiện');
+        getDataStudent();
+    }
+
     return ( 
         <div className='manage'>
             <Row className='header-manage'>
@@ -386,7 +516,9 @@ const Manage = () => {
                 <Col span={5} className='info'>
                     <Image className='avatar' src='image/avatar.png' preview={false} />
                     <p className='name'>{user.name}</p>
-                    <Image className='more' src='image/Vector.png' preview={false} />
+                    <Tooltip title="Đăng xuất">
+                        <Image onClick={logout} className='more' src='image/logout.png' preview={false} />
+                    </Tooltip>
                 </Col>
             </Row>
             <Row className='manage-content'>
@@ -424,6 +556,10 @@ const Manage = () => {
                                 <Row style={{marginTop: 10}}>
                                     <p>Địa chỉ</p>
                                     <Input onChange={(e) => setAddress(e.target.value)} className='input-address' placeholder="Nhập địa điểm" />
+                                </Row>
+                                <Row style={{marginTop: 10}}>
+                                    <p>Điểm cộng</p>
+                                    <Input onChange={(e) => setPlus(e.target.value)} className='input-address' placeholder="Nhập điểm cộng" />
                                 </Row>
                                 <div style={{marginTop:10}}>
                                     <p>Thời gian diễn ra sự kiện</p>
@@ -484,6 +620,10 @@ const Manage = () => {
                         <Button onClick={handleOpenStudent} className='btn-add-tbleft'>Thêm</Button>
                         <Button className='btn-delete'>Xóa</Button>
                     </div>
+                    <div className='event-filter'>
+                        <p>Sự kiện: {eventFilter}</p>
+                        <Image onClick={delFilter} className = 'icon-x' src = 'image/x-circle.png' preview = {false} />
+                    </div>
                     <Table 
                         className='table-right' 
                         rowSelection={rowSelectionRight} 
@@ -524,6 +664,17 @@ const Manage = () => {
                         <Input onChange={(e) => setEditLop(e.target.value)} value={lopEdit} className='input-address' placeholder="Nhập lớp sinh viên" />
                     </Row>
             </Modal>
+
+            <Modal title="Danh sách sự kiện tham gia" visible={openModalView}
+                okButtonProps={{ style: { display: 'none' } }} onCancel={handleCloseView} width={800}>
+                    <Table 
+                        className='table-modal' 
+                        rowSelection={rowSelectionLeft} 
+                        columns={columnsModal} 
+                        dataSource={dataModal} 
+                    />
+            </Modal>
+
         </div>
     );
 }
