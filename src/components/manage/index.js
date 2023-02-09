@@ -439,6 +439,7 @@ const Manage = () => {
             console.log(response)
         }
         getDataStudent();
+        setEventFilter('Chưa chọn sự kiện')
         handleCloseStudent();
     }
 
