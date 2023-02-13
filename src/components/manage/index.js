@@ -23,7 +23,7 @@ const headers = [
     { label: "ĐIỂM CỘNG RÈN LUYỆN", key: "plus" }
 ];
 
-const columnsRight = [
+const columnsRight1 = [
     {
         title: '#',
         dataIndex: 'stt'
@@ -104,6 +104,78 @@ const columnsModal = [
     },
 ];
 
+const columnsFilter = [
+    {
+        title: 'MSSV',
+        dataIndex: 'mssv',
+    },
+    {
+        title: 'HỌ TÊN',
+        dataIndex: 'name',
+    },
+    {
+        title: 'LỚP',
+        dataIndex: 'lop',
+    },
+    {
+        title: 'ĐIỂM RÈN LUYỆN',
+        dataIndex: 'plus',
+    },
+    {
+        title: 'Đã điểm danh',
+        dataIndex: 'check'
+    },
+    {
+        title: '',
+        dataIndex: 'action'
+    },
+    {
+        title: '',
+        dataIndex: 'view'
+    }
+]
+
+
+const columnsAddStudentOfEvent = [
+    {
+        title: 'MSSV',
+        dataIndex: 'mssv',
+    },
+    {
+        title: 'HỌ TÊN',
+        dataIndex: 'name',
+    },
+    {
+        title: 'LỚP',
+        dataIndex: 'lop',
+    },
+    {
+        title: 'ĐIỂM RÈN LUYỆN',
+        dataIndex: 'plus',
+    },
+    {
+        title: '',
+        dataIndex: 'action'
+    },
+]
+const columnsCurrentStudentOfEvent = [
+    {
+        title: 'MSSV',
+        dataIndex: 'mssv',
+    },
+    {
+        title: 'HỌ TÊN',
+        dataIndex: 'name',
+    },
+    {
+        title: 'LỚP',
+        dataIndex: 'lop',
+    },
+    {
+        title: 'ĐIỂM RÈN LUYỆN',
+        dataIndex: 'plus',
+    },
+]
 
 const data = [
     {
@@ -172,8 +244,13 @@ const Manage = () => {
         }
     }
 
+    const [eventFilterId, setEventFilterId] = useState('');
+
     const filterStudentByEvent = async (event) => {
         setEventFilter(event.name);
+        setEventFilterId(event.id);
+        setColumnsRight(columnsFilter)
+        setIsDis(false);
         let response;
         let code = 222;
         await axios.get(`http://localhost:2002/studentEvents/event/${event.id}`)
@@ -186,7 +263,7 @@ const Manage = () => {
             let tmp = [];
 
             for ( let i = 0; i < response.data.length; i++) {
-                tmp.push(response.data[i].student)
+                tmp.push({...response.data[i].student, check: response.data[i].check})
             }
             console.log(tmp);
             if ( tmp.length > 0 ) {
@@ -344,6 +421,7 @@ const Manage = () => {
         ],
     };
 
+    const [columnsRight, setColumnsRight] = useState(columnsRight1);
 
     const showDeleteConfirm = (id) => {
         confirm({
@@ -428,7 +506,8 @@ const Manage = () => {
             name: nameStudent,
             dob: '2023-01-01',
             lop: lop,
-            mssv: mssv
+            mssv: mssv,
+            plus: 0
         })
             .then( res => {
                 response = res.data;
@@ -505,8 +584,113 @@ const Manage = () => {
     
     const delFilter = () => {
         setEventFilter('Chưa chọn sự kiện');
+        setIsDis(true);
         getDataStudent();
+        setColumnsRight(columnsRight1)
     }
+
+    const [isDis, setIsDis] = useState(true);
+
+    const [isOpenModalAddStudentOfEvent, setIsOpenModalAddStudentOfEvent] = useState(false);
+    
+    const handleAddStudentOfEvent = async (student) => {
+        console.log(student);
+        
+        let response;
+        let code;
+        await axios.post(`http://localhost:2002/studentEvents`, {
+            studentMSSV: student.mssv,
+            eventName: eventFilter
+        })
+            .then( res => {
+                response = res.data;
+                code = 200;
+            })
+            .catch(error => {console.log(error)});
+        if ( code === 200 ) {
+            console.log(response)
+        }
+
+        getDataAddStudentOfEvent();
+    }
+
+    const getDataAddStudentOfEvent = async () => {
+        let response;
+        let code = 222;
+        await axios.get(`http://localhost:2002/students`)
+            .then( res => {
+                response = res.data;
+                code = 200;
+            })
+            .catch(error => {console.log(error)});
+
+            
+        let response2;
+        let code2;
+
+        console.log(eventFilterId)
+        
+        await axios.get(`http://localhost:2002/studentEvents/event/${eventFilterId}`)
+            .then( res => {
+                response2 = res.data;
+                code2 = 200;
+            })
+            .catch(error => {console.log(error)});
+        let tmp1, tmp;
+        if ( code2 === 200 ) {
+            tmp1 = [];
+
+            for ( let i = 0; i < response2.data.length; i++) {
+                tmp1.push(response2.data[i].student);
+            }
+            if ( tmp1.length > 0)
+                for ( let i = 0; i < tmp1.length; i++) {
+                    tmp1[i].stt = i+1;
+                    tmp1[i].plus = '+' + tmp1[i].plus;
+                }
+            setDataCurrentOfEvent(tmp1);
+        }
+        if ( code === 200 ) {
+            tmp = response.data;
+            let ans = [];
+            let stt = 1;
+            for ( let i = 0; i < tmp.length; i++) {
+                let check = 0;
+                for ( let j = 0; j < tmp1.length; j++) {
+                    if ( tmp[i].mssv == tmp1[j].mssv ) {
+                        check = 1;
+                    }
+                }
+                if ( check!=0 ) {
+                    continue;
+                }
+                tmp[i].stt = stt;
+                stt++;
+                tmp[i].plus = '+' + tmp[i].plus;
+                tmp[i].action = <Tooltip title='Thêm sinh viên'><Image className='icon-add-student-event' onClick={() => handleAddStudentOfEvent(tmp[i])} src = 'image/add-person.png' preview = {false} /></Tooltip>
+                ans.push(tmp[i]);
+            }
+            setDataAdd(ans);
+        }
+    }
+
+    const handleOpenModalAddStudentOfEvent = () => {
+        setIsOpenModalAddStudentOfEvent(true);
+        getDataAddStudentOfEvent();
+
+    }
+
+    const handleCloseModalAddStudentOfEvent = () => {
+        setIsOpenModalAddStudentOfEvent(false);
+    }
+
+    const handleOKAddStudentOfEvent = () => {
+
+    }
+
+    const [dataModalAdd, setDataAdd] = useState([]);
+
+    const [dataCurrentOfEvent, setDataCurrentOfEvent] = useState([]);
 
     return ( 
         <div className='manage'>
@@ -624,6 +808,7 @@ const Manage = () => {
                     <div className='event-filter'>
                         <p>Sự kiện: {eventFilter}</p>
                         <Image onClick={delFilter} className = 'icon-x' src = 'image/x-circle.png' preview = {false} />
+                        <Button disabled={isDis} onClick={handleOpenModalAddStudentOfEvent} className='btn-add-tbleft'>Thêm sinh viên cho sự kiện</Button>
                     </div>
                     <Table 
                         className='table-right' 
@@ -676,6 +861,28 @@ const Manage = () => {
                     />
             </Modal>
 
+            <Modal title="Thêm sinh viên vào sự kiện" visible={isOpenModalAddStudentOfEvent}
+                okButtonProps={{ style: { display: 'none' } }} onCancel={handleCloseModalAddStudentOfEvent} width={1200}>
+                    <Row>
+                        <Col span={12}>
+                            <h4>Sinh viên đã đăng kí</h4>
+                            <Table 
+                                className='table-modal' 
+                                columns={columnsCurrentStudentOfEvent} 
+                                dataSource={dataCurrentOfEvent} 
+                            />
+                        </Col>
+                        <Col span={12}>
+                            <h4 className='table-modal-2'>Sinh viên chưa đăng kí</h4>
+                            <Table 
+                                className='table-modal-2' 
+                                columns={columnsAddStudentOfEvent} 
+                                dataSource={dataModalAdd} 
+                            />
+                        </Col>
+                    </Row>
+                    
+            </Modal>
         </div>
     );
 }

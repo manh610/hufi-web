@@ -174,8 +174,25 @@
 .icon-x {
     width: 30px;
     margin-left: 50px;
+    margin-right: 50px;
 }
 
 .icon-x:hover {
     cursor: pointer;
+}
+
+.icon-add-student-event {
+    width: 20px;
+}
+
+.icon-add-student-event:hover {
+    cursor: pointer;
+}
+
+.table-modal {
+    margin-right: 10px;
+}
+
+.table-modal-2 {
+    margin-left: 10px;
 }
