@@ -270,7 +270,56 @@ const Manage = () => {
                 for ( let i = 0; i < tmp.length; i++) {
                     tmp[i].stt = i+1;
                     tmp[i].plus = '+' + tmp[i].plus;
-                    tmp[i].action = <Tooltip title='Sửa'><Image className='icon-edit' onClick={() => hanleOpenEdit(tmp[i])} src = 'image/edit.png' preview = {false} /></Tooltip>
+                    tmp[i].action = <Tooltip title='Xóa'><Image className='icon-edit' onClick={() => handleDeleteStudentofEvent(tmp[i], event)} src = 'image/delete.png' preview = {false} /></Tooltip>
+                    tmp[i].view = <Tooltip title='Xem chi tiết'><Image className='icon-view' onClick={() => openView(tmp[i])} src = 'image/view.png' preview = {false} /></Tooltip>
+                }
+            }
+            setDataRight(tmp);
+        }
+    }
+
+    const handleDeleteStudentofEvent = async (student, event) => {
+        let response;
+        let code = 222;
+        console.log(student);
+        console.log(event)
+        await axios.delete(`http://localhost:2002/studentEvents/delete`, {
+            data: {
+                studentMSSV: student.mssv,
+                eventName: event.name
+            }
+        })
+            .then( res => {
+                response = res.data;
+                code = 200;
+            })
+            .catch(error => {console.log(error)});
+        if ( code === 200 ) {
+        }
+        await hi(event);
+    }
+
+    const hi = async (event) => {
+        let response;
+        let code = 222;
+        await axios.get(`http://localhost:2002/studentEvents/event/${event.id}`)
+            .then( res => {
+                response = res.data;
+                code = 200;
+            })
+            .catch(error => {console.log(error)});
+        if ( code === 200 ) {
+            let tmp = [];
+
+            for ( let i = 0; i < response.data.length; i++) {
+                tmp.push({...response.data[i].student, check: response.data[i].check})
+            }
+            console.log(tmp);
+            if ( tmp.length > 0 ) {
+                for ( let i = 0; i < tmp.length; i++) {
+                    tmp[i].stt = i+1;
+                    tmp[i].plus = '+' + tmp[i].plus;
+                    tmp[i].action = <Tooltip title='Xóa'><Image className='icon-edit' onClick={() => handleDeleteStudentofEvent(tmp[i])} src = 'image/delete.png' preview = {false} /></Tooltip>
                     tmp[i].view = <Tooltip title='Xem chi tiết'><Image className='icon-view' onClick={() => openView(tmp[i])} src = 'image/view.png' preview = {false} /></Tooltip>
                 }
             }
@@ -451,6 +500,9 @@ const Manage = () => {
     const [openModalAddStudent, setOpenModalAddStudent] = React.useState(false);
     const handleOpenStudent = () => {
         setOpenModalAddStudent(true);
+        setNameStudent("");
+        setMSSV("");
+        setLop("")
     };
     const handleCloseStudent = () => {
         setOpenModalAddStudent(false);
@@ -692,6 +744,65 @@ const Manage = () => {
 
     const [dataCurrentOfEvent, setDataCurrentOfEvent] = useState([]);
 
+    const handleSearch = async (e) => {
+        const textSearch = e.target.value.toLowerCase();
+        let response;
+        let code = 222;
+        if ( eventFilter=='Chưa chọn sự kiện') {
+            console.log('filter all student')
+            await axios.get(`http://localhost:2002/students`)
+                .then( res => {
+                    response = res.data;
+                    code = 200;
+                })
+                .catch(error => {console.log(error)});
+            if ( code === 200 ) {
+                let tmp = response.data;
+                let tmp2 = [];
+                for ( let i = 0; i < tmp.length; i++) {
+                    tmp[i].stt = i+1;
+                    tmp[i].plus = '+' + tmp[i].plus;
+                    tmp[i].action = <Tooltip title='Sửa'><Image className='icon-edit' onClick={() => hanleOpenEdit(tmp[i])} src = 'image/edit.png' preview = {false} /></Tooltip>
+                    tmp[i].view = <Tooltip title='Xem chi tiết'><Image className='icon-view' onClick={() => openView(tmp[i])} src = 'image/view.png' preview = {false} /></Tooltip>
+                    if ( tmp[i].name.toLowerCase().includes(textSearch) || tmp[i].lop.toLowerCase().includes(textSearch)) {
+                        tmp2.push(tmp[i]);
+                    }
+                }
+                setDataRight(tmp2);
+            }
+        } else {
+            console.log('filter all student of event')
+            await axios.get(`http://localhost:2002/studentEvents/event/${eventFilterId}`)
+            .then( res => {
+                response = res.data;
+                code = 200;
+            })
+            .catch(error => {console.log(error)});
+            if ( code === 200 ) {
+                let tmp = [];
+
+                for ( let i = 0; i < response.data.length; i++) {
+                    tmp.push({...response.data[i].student, check: response.data[i].check})
+                }
+                console.log(tmp);
+                let tmp2 = [];
+                if ( tmp.length > 0 ) {
+                    for ( let i = 0; i < tmp.length; i++) {
+                        tmp[i].stt = i+1;
+                        tmp[i].plus = '+' + tmp[i].plus;
+                        tmp[i].action = <Tooltip title='Xóa'><Image className='icon-edit' src = 'image/delete.png' preview = {false} /></Tooltip>
+                        tmp[i].view = <Tooltip title='Xem chi tiết'><Image className='icon-view' onClick={() => openView(tmp[i])} src = 'image/view.png' preview = {false} /></Tooltip>
+                        if ( tmp[i].name.toLowerCase().includes(textSearch) || tmp[i].lop.toLowerCase().includes(textSearch)) {
+                            tmp2.push(tmp[i]);
+                        }
+                    }
+                }
+                setDataRight(tmp2);
+            }
+        }
+        
+    }
+
     return ( 
         <div className='manage'>
             <Row className='header-manage'>
@@ -729,7 +840,7 @@ const Manage = () => {
                             }}
                             defaultValue=""
                             placeholder='Tìm kiếm'
-
+                            
                         />
                         <Button onClick={handleOpen} className='btn-add-tbleft'>Thêm</Button>
                         <Modal title="Thêm sự kiện" visible={open}
@@ -789,7 +900,7 @@ const Manage = () => {
                             }}
                             defaultValue=""
                             placeholder='Tìm kiếm'
-
+                            onChange={(e) => handleSearch(e)}
                         />
                         <Button className='btn-import'>Import file</Button>
 
@@ -823,15 +934,15 @@ const Manage = () => {
                 onOk={handleAddStudent} onCancel={handleCloseStudent}>
                     <Row>
                         <p>Tên sinh viên</p>
-                        <Input onChange={(e) => setNameStudent(e.target.value)} className='input-nameStudent' placeholder="Nhập tên sinh viên" />
+                        <Input value={nameStudent} onChange={(e) => setNameStudent(e.target.value)} className='input-nameStudent' placeholder="Nhập tên sinh viên" />
                     </Row>
                     <Row style={{marginTop: 10}}>
                         <p>Mã số sinh viên</p>
-                        <Input onChange={(e) => setMSSV(e.target.value)} className='input-address' placeholder="Nhập mã số sinh viên" />
+                        <Input value={mssv} onChange={(e) => setMSSV(e.target.value)} className='input-address' placeholder="Nhập mã số sinh viên" />
                     </Row>
                     <Row style={{marginTop: 10}}>
                         <p>Lớp</p>
-                        <Input onChange={(e) => setLop(e.target.value)} className='input-address' placeholder="Nhập lớp sinh viên" />
+                        <Input value={lop}  onChange={(e) => setLop(e.target.value)} className='input-address' placeholder="Nhập lớp sinh viên" />
                     </Row>
             </Modal>
 
